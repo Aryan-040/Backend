@@ -1,5 +1,6 @@
 import ApiError from "../utils/apiError.js"
 import asynHandler from "../utils/asyncHandler.js"
+import uploadOnCloudinary from "../utils/cloudinary.js"
 
 const registerUser = asynHandler ( async (req,res) => {
 
