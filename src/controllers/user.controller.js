@@ -1,6 +1,6 @@
 import ApiError from "../utils/apiError.js"
 import asyncHandler from "../utils/asyncHandler.js"
-import uploadOnCloudinary from "../utils/cloudinary.js"
+import uploadOnCloudinary , {deleteFromCloudinary } from "../utils/cloudinary.js"
 import { User } from "../models/user.model.js"
 import ApiResponse from "../utils/apiResponse.js"
 import jwt from "jsonwebtoken"
@@ -262,9 +262,11 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
         throw new ApiError(400, "Avatar file missing")
     }
 
+    const oldAvatarUrl = req.user?.avatar
+
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     
-    if(!avatar.url){
+    if(!avatar?.url){
         throw new ApiError(400,"Error while uploading Avatar")
     }
 
@@ -272,12 +274,15 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
         req.user?._id,
         {
             $set: {
-                fullName,
-                email: email
+                avatar: avatar.url
             }
         },
         {new: true}
     ).select("-password")
+
+    if (oldAvatarUrl) {
+        await deleteFromCloudinary(oldAvatarUrl)
+    }
 
     return res.status(200)
     .json(new ApiResponse(200,user,"Avatar image updated succesfully"))
@@ -291,9 +296,11 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Cover image file is missing")
     }
 
+    const oldCoverImageUrl = req.user?.coverImage
+
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if (!coverImage.url) {
+    if (!coverImage?.url) {
         throw new ApiError(400, "Error while uploading on avatar")
         
     }
@@ -308,15 +315,16 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         {new: true}
     ).select("-password")
 
+    if (oldCoverImageUrl) {
+        await deleteFromCloudinary(oldCoverImageUrl)
+    }
+
     return res
     .status(200)
     .json(
         new ApiResponse(200, user, "Cover image updated successfully")
     )
 })
-
-
-
 
 export { registerUser, 
     logInUser, 
