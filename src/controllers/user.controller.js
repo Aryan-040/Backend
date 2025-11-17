@@ -206,6 +206,8 @@ const refreshAccessToken = asyncHandler ( async ( req,res) => {
     }
 })
 const changeCurrentPassword = asyncHandler (async (req,res) => {
+    const {oldPassword, newPassword} = req.body
+
     const user = await User.findById(req?._id)
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
@@ -221,4 +223,12 @@ const changeCurrentPassword = asyncHandler (async (req,res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"))
 })
 
+const updateAccountDetails = asyncHandler(async(req,res)=>{
+    const {fullbody, email} = req.body
+
+    const user = User.findById(req?._id)
+    
+
+
+})
 export { registerUser, logInUser, logOutUser, refreshAccessToken, changeCurrentPassword }
