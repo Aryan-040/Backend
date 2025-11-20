@@ -89,7 +89,60 @@ const getAllVideos = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, videos, "Videos fetched successfully"))
 })
+const publishAVideo = asyncHandler(async (req, res) => {
+    const {title, description} = req.body
+    const titleTrimmed = title?.trim()
+    const descriptionTrimmed = description?.trim()
+
+    if (!titleTrimmed || !descriptionTrimmed) {
+        throw new ApiError(400, "Title and description are required")
+    }
+
+    const videoLocalPath =
+        req.files?.videoFile?.[0]?.path ??
+        (req.file?.fieldname === "videoFile" ? req.file.path : undefined)
+    const thumbnailLocalPath =
+        req.files?.thumbnail?.[0]?.path ??
+        (req.file?.fieldname === "thumbnail" ? req.file.path : undefined)
+
+    if (!videoLocalPath) {
+        throw new ApiError(400, "Video file is required")
+    }
+
+    if (!thumbnailLocalPath) {
+        throw new ApiError(400, "Thumbnail file is required")
+    }
+
+    const uploadedVideo = await uploadOnCloudinary(videoLocalPath)
+    if (!uploadedVideo?.url) {
+        throw new ApiError(500, "Failed to upload video")
+    }
+
+    const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    if (!uploadedThumbnail?.url) {
+        throw new ApiError(500, "Failed to upload thumbnail")
+    }
+
+    const video = await Video.create({
+        title: titleTrimmed,
+        description: descriptionTrimmed,
+        videoFile: uploadedVideo.url,
+        thumbnail: uploadedThumbnail.url,
+        duration: uploadedVideo.duration || 0,
+        owner: req.user._id
+    })
+
+    const populatedVideo = await Video.findById(video._id).populate(
+        "owner",
+        "fullName username avatar"
+    )
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, populatedVideo, "Video published successfully"))
+})
+
 export {
     getAllVideos,
-   
+    publishAVideo
 }
