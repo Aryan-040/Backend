@@ -20,7 +20,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (userId && !isValidObjectId(userId)) {
         throw new ApiError(400, "Invalid user ID")
     }
-
+ 
     if (userId) {
         const userExists = await User.exists({_id: userId})
         if (!userExists) {
@@ -40,7 +40,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     if (userId) {
-        matchStage.owner = new mongoose.Types.ObjectId(userId)
+        matchStage.owner = new mongoose.Types.ObjectId(String(userId))
     }
 
     const pipeline = [
